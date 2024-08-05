@@ -1,7 +1,7 @@
 package apiclient
 
 import (
-	"github.com/rafaelherik/azure-naming-provider/tf/apiclient/models"
+	"github.com/rafaelherik/terraform-provider-aznamingtool/apiclient/models"
 )
 
 type CustomComponentService struct {

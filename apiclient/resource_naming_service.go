@@ -3,7 +3,7 @@ package apiclient
 import (
 	"fmt"
 
-	"github.com/rafaelherik/azure-naming-provider/tf/apiclient/models"
+	"github.com/rafaelherik/terraform-provider-aznamingtool/apiclient/models"
 )
 
 // ResourceNamingService provides methods for requesting and validating resource names.

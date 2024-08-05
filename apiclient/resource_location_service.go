@@ -1,6 +1,6 @@
 package apiclient
 
-import "github.com/rafaelherik/azure-naming-provider/tf/apiclient/models"
+import "github.com/rafaelherik/terraform-provider-aznamingtool/apiclient/models"
 
 type ResourceLocationService struct {
 	baseService *BaseService

@@ -1,4 +1,4 @@
-module github.com/rafaelherik/azure-naming-provider/tf
+module github.com/rafaelherik/terraform-provider-aznamingtool
 
 go 1.22.5
 

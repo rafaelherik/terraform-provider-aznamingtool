@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/rafaelherik/azure-naming-provider/tf/apiclient"
+	"github.com/rafaelherik/terraform-provider-aznamingtool/apiclient"
 )
 
 var (

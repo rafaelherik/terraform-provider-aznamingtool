@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/rafaelherik/azure-naming-provider/tf/apiclient/models"
+	"github.com/rafaelherik/terraform-provider-aznamingtool/apiclient/models"
 	"github.com/stretchr/testify/assert"
 )
 

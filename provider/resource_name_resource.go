@@ -6,8 +6,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/rafaelherik/azure-naming-provider/tf/apiclient"
-	"github.com/rafaelherik/azure-naming-provider/tf/apiclient/models"
+	"github.com/rafaelherik/terraform-provider-aznamingtool/apiclient"
+	"github.com/rafaelherik/terraform-provider-aznamingtool/apiclient/models"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
