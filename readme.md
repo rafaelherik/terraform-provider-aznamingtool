@@ -1,7 +1,3 @@
----
-layout: inline
----
-
 # Azure Naming Tool - Terraform provider
 
 [![Release](https://github.com/rafaelherik/terraform-provider-aznamingtool/actions/workflows/release.yml/badge.svg)](https://github.com/rafaelherik/terraform-provider-aznamingtool/actions/workflows/release.yml)
@@ -17,8 +13,7 @@ This provider is an implementation to enable the declarative API to interact wit
 
 ### Provider intialization
 
-```hcl annotate 
-# 
+```hcl copy 
 terraform {
     required_providers {
          aznamingtool = {
