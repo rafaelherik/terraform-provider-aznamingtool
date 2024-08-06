@@ -1,6 +1,6 @@
 package apiclient
 
-import "github.com/rafaelherik/terraform-provider-aznamingtool/apiclient/models"
+import "github.com/rafaelherik/terraform-provider-aznamingtool/tools/apiclient/models"
 
 type ResourceTypeService struct {
 	baseService *BaseService
@@ -24,7 +24,7 @@ func NewResourceTypeService(client *APIClient) *ResourceTypeService {
 //   - An error if the request fails or the response indicates failure.
 func (s *ResourceTypeService) GetAllResourceTypes() (*[]models.ResourceType, error) {
 	var response []models.ResourceType
-	err := s.baseService.DoGet("RequestName", nil, &response)
+	err := s.baseService.DoGet("GetAllResourceTypes", nil, &response)
 	if err != nil {
 		return nil, err
 	}

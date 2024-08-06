@@ -1,7 +1,7 @@
 package apiclient
 
 import (
-	"github.com/rafaelherik/terraform-provider-aznamingtool/apiclient/models"
+	"github.com/rafaelherik/terraform-provider-aznamingtool/tools/apiclient/models"
 )
 
 type CustomComponentService struct {

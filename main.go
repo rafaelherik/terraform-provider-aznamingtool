@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/rafaelherik/terraform-provider-aznamingtool/provider"
+	"github.com/rafaelherik/terraform-provider-aznamingtool/internal/provider"
 )
 
 var (

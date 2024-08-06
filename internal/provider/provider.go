@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/rafaelherik/terraform-provider-aznamingtool/apiclient"
+	"github.com/rafaelherik/terraform-provider-aznamingtool/tools/apiclient"
 )
 
 var (
@@ -109,7 +109,7 @@ func (p *AzureNamingToolProvider) Configure(ctx context.Context, req provider.Co
 	tflog.Info(ctx, "Configuring ApiClient")
 
 	// Example of configuring the client
-	client := apiclient.NewAPIClient(api_key, base_url, admin_password, nil)
+	client := apiclient.NewAPIClient(base_url, api_key, admin_password, nil)
 
 	// Make the client available during DataSource and Resource type Configure methods
 	resp.DataSourceData = client

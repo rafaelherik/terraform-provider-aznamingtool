@@ -2,13 +2,15 @@ package provider
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/rafaelherik/terraform-provider-aznamingtool/apiclient"
-	"github.com/rafaelherik/terraform-provider-aznamingtool/apiclient/models"
+	"github.com/rafaelherik/terraform-provider-aznamingtool/tools/apiclient"
+	"github.com/rafaelherik/terraform-provider-aznamingtool/tools/apiclient/models"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -69,7 +71,7 @@ func (r *AzureNameResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			"resource_type": schema.StringAttribute{
 				Required: true,
 				Validators: []validator.String{
-					validators.resourceTypeValidator(validResourceTypes),
+					resourceTypeValidator{availableTypes: validResourceTypeNames},
 				},
 			},
 			"location": schema.StringAttribute{
@@ -100,6 +102,7 @@ func (r *AzureNameResource) Configure(_ context.Context, req resource.ConfigureR
 		return resources
 	}(validResourceTypes)
 
+	fmt.Println("Resource Types: ", strings.Join(validResourceTypeNames, ","))
 }
 
 // Create handles the creation of the resource.

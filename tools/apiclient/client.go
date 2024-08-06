@@ -85,6 +85,9 @@ func NewAPIClient(baseURL string, apiKey string, admin_password string, HttpClie
 
 			// Resource Organizations
 
+			// Resource Types
+			"GetAllResourceTypes": baseURL + "/api/ResourceTypes",
+
 			//Resource Units
 			"CreateOrUpdateResourceUnit": baseURL + "/api/ResourceUnitDepts",
 			"DeleteResourceUnit":         baseURL + "/api/ResourceUnitDepts/{id}",

@@ -1,6 +1,6 @@
 package apiclient
 
-import "github.com/rafaelherik/terraform-provider-aznamingtool/apiclient/models"
+import "github.com/rafaelherik/terraform-provider-aznamingtool/tools/apiclient/models"
 
 type ResourceComponentService struct {
 	baseService *BaseService
