@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	version string = "dev"
+	version string = "1.0.0"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "hashicorp.com/rafaelherik/azurenamingtool",
+		Address: "registry.terrafrom.io/rafaelherik/aznamingtool",
 		Debug:   debug,
 	}
 

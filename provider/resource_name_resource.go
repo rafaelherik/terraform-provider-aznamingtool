@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/rafaelherik/terraform-provider-aznamingtool/apiclient"
 	"github.com/rafaelherik/terraform-provider-aznamingtool/apiclient/models"
@@ -12,9 +13,14 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource              = &AzureNameResource{}
-	_ resource.ResourceWithConfigure = &AzureNameResource{}
+	_                      resource.Resource              = &AzureNameResource{}
+	_                      resource.ResourceWithConfigure = &AzureNameResource{}
+	validResourceTypes     *[]models.ResourceType
+	validResourceTypeNames []string
 )
+
+type AzureResourceType struct {
+}
 
 func NewAzureNameResource() resource.Resource {
 	return &AzureNameResource{}
@@ -36,12 +42,12 @@ type AzureNameResourceModel struct {
 	Location       types.String `tfsdk:"location"`
 	Environment    types.String `tfsdk:"environment"`
 	ResourceTypeId types.Int64  `tfsdk:"resource_id"`
-	CreatedAt      types.String `tfsdk:"createdAt"`
+	CreatedAt      types.String `tfsdk:"created_at"`
 }
 
 // Metadata returns the resource type name.
 func (r *AzureNameResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_resource_name"
+	resp.TypeName = "aznamingtool_resource_name"
 }
 
 // Schema defines the schema for the resource.
@@ -55,13 +61,16 @@ func (r *AzureNameResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				Required: true,
 			},
 			"business_unit": schema.StringAttribute{
-				Required: false,
+				Optional: true,
 			},
 			"project": schema.StringAttribute{
 				Required: true,
 			},
 			"resource_type": schema.StringAttribute{
 				Required: true,
+				Validators: []validator.String{
+					validators.resourceTypeValidator(validResourceTypes),
+				},
 			},
 			"location": schema.StringAttribute{
 				Required: true,
@@ -69,12 +78,7 @@ func (r *AzureNameResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			"environment": schema.StringAttribute{
 				Required: true,
 			},
-			"createdAt": schema.StringAttribute{
-				Required: false,
-				Computed: true,
-			},
-			"updatedAt": schema.StringAttribute{
-				Required: false,
+			"created_at": schema.StringAttribute{
 				Computed: true,
 			},
 		},
@@ -86,8 +90,16 @@ func (r *AzureNameResource) Configure(_ context.Context, req resource.ConfigureR
 	if req.ProviderData == nil {
 		return
 	}
-
 	r.client = req.ProviderData.(*apiclient.APIClient)
+	validResourceTypes, _ = _GetAllResourceTypes(r.client)
+	validResourceTypeNames = func(resourceType *[]models.ResourceType) []string {
+		resources := make([]string, len(*resourceType))
+		for i, resourceType := range *resourceType {
+			resources[i] = resourceType.Resource
+		}
+		return resources
+	}(validResourceTypes)
+
 }
 
 // Create handles the creation of the resource.
@@ -186,4 +198,16 @@ func (r *AzureNameResource) Delete(ctx context.Context, req resource.DeleteReque
 // ImportState handles importing the resource state.
 func (r *AzureNameResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	// Example import logic
+}
+
+func _GetAllResourceTypes(c *apiclient.APIClient) (*[]models.ResourceType, error) {
+	var response *[]models.ResourceType
+	svc := apiclient.NewResourceTypeService(c)
+	var err error
+	response, err = svc.GetAllResourceTypes()
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
 }
