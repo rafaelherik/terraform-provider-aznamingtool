@@ -13,10 +13,12 @@ provider "aznamingtool" {
   admin_password = "1q2w3e$R%T" 
 }
 
-resource "aznamingtool_resource_name" "example" {
-  environment = "example"
-  organization = "example"
-  location = "eastus"
-  resource_type = "example"
-  project = "example"
+resource "aznamingtool_resource_name" "vm-linux-name" {
+  environment = "dev"
+  location = "aec"
+  project = "tnp"
+  function = "func"
+  resource_type_id = 85
+  resource_type= "vm"
+  instance = "17"
 }
