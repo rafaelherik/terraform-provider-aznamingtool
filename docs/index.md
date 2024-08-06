@@ -1,22 +1,44 @@
-# aznamingtool Provider
+# Azure Naming Tool Provider
 
-This is a terraform provider to consume the Azure Naming Tool API, to manage resource naming conventions for Azure Resource. This is an Open Source project supported by Microsoft and developed by the community.
+## Overview
+
+The Azure Naming Tool provider allows you to manage and configure naming conventions for your Azure resources using the Azure Naming Tool API. This provider can be used to ensure consistent naming across your Azure environment, adhering to your organizational policies.
 
 ## Example Usage
 
 ```hcl
-terraform {
-    required_providers {
-         aznamingtool = {
-            source = "registry.terrafrom.io/rafaelherik/aznamingtool"
-        }
-    }
+provider "azurenaming" {
+  base_url      = "https://api.namingtool.example.com"
+  api_key       = var.api_key
+  admin_password = var.admin_password
 }
 
-provider "aznamingtool" {
-  api_key = "YOUR_API_KEY"
-  base_url = "http://localhost:8081"
-  admin_password = "YOUR_ADMIN_PASSWORD" // THE ADMIN PASSWORD IS USED WHEN YOU WANT TO DELETE PREVIOUSLY GENERATED NAMES, IF IT'S NOT THE CASE YOU CAN SKIP THIS
+data "azurenamingtool_resource_name" "example" {
+  environment   = "prod"
+  organization  = "my-org"
+  location      = "westus"
+  resource_type = "vm"
+  project       = "project1"
+  instance      = "001"
 }
 
+resource "azurenamingtool_resource" "example" {
+  name = data.azurenamingtool_resource_name.example.name
+}
 ```
+
+## Argument Reference
+
+* `base_url` - (Optional) The base URL of the Azure Naming Tool API. Defaults to the value of the `AZ_NAMINGTOOL_BASEURL` environment variable if not provided.
+
+* `api_key` - (Optional, Sensitive) The API key used to authenticate with the Azure Naming Tool API. Defaults to the value of the `AZ_NAMINGTOOL_APIKEY` environment variable if not provided.
+
+* `admin_password` - (Optional, Sensitive) The administrator password used for privileged operations in the Azure Naming Tool. Defaults to the value of the `AZ_NAMINGTOOL_ADMINPASSWORD` environment variable if not provided.
+
+
+
+## Attribute Reference
+
+* `id` - A unique identifier for the resource.
+* `name` - The name of the resource as configured or generated.
+* `created_at` - The timestamp when the resource was created, in ISO 8601 format (e.g., 2023-08-01T12:34:56Z).

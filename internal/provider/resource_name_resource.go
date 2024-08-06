@@ -13,15 +13,9 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_                      resource.Resource              = &AzureNameResource{}
-	_                      resource.ResourceWithConfigure = &AzureNameResource{}
-	validResourceTypes     *[]models.ResourceType
-	validResourceTypeNames []string
+	_ resource.Resource              = &AzureNameResource{}
+	_ resource.ResourceWithConfigure = &AzureNameResource{}
 )
-
-type AzureResourceType struct {
-	client *apiclient.APIClient
-}
 
 func NewAzureNameResource() resource.Resource {
 	return &AzureNameResource{}
@@ -34,18 +28,19 @@ type AzureNameResource struct {
 
 // ExampleResourceModel describes the resource data model.
 type AzureNameResourceModel struct {
-	ID             types.Int64  `tfsdk:"id"`
-	Name           types.String `tfsdk:"name"`
-	ResourceType   types.String `tfsdk:"resource_type"`
-	ResourceTypeId types.Int64  `tfsdk:"resource_type_id"`
-	Organization   types.String `tfsdk:"organization"`
-	BusinessUnit   types.String `tfsdk:"business_unit"`
-	Project        types.String `tfsdk:"project"`
-	Function       types.String `tfsdk:"function"`
-	Location       types.String `tfsdk:"location"`
-	Instance       types.String `tfsdk:"instance"`
-	Environment    types.String `tfsdk:"environment"`
-	CreatedAt      types.String `tfsdk:"created_at"`
+	ID                   types.Int64  `tfsdk:"id"`
+	Name                 types.String `tfsdk:"name"`
+	ResourceType         types.String `tfsdk:"resource_type"`
+	ResourceTypeFullName types.String `tfsdk:"resource_type_full_name"`
+	ResourceTypeId       types.Int64  `tfsdk:"resource_type_id"`
+	Organization         types.String `tfsdk:"organization"`
+	BusinessUnit         types.String `tfsdk:"business_unit"`
+	Project              types.String `tfsdk:"project"`
+	Function             types.String `tfsdk:"function"`
+	Location             types.String `tfsdk:"location"`
+	Instance             types.String `tfsdk:"instance"`
+	Environment          types.String `tfsdk:"environment"`
+	CreatedAt            types.String `tfsdk:"created_at"`
 }
 
 // Metadata returns the resource type name.
@@ -74,6 +69,9 @@ func (r *AzureNameResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			},
 			"project": schema.StringAttribute{
 				Required: true,
+			},
+			"resource_type_full_name": schema.StringAttribute{
+				Computed: true,
 			},
 			"resource_type": schema.StringAttribute{
 				Optional: true,
@@ -115,6 +113,13 @@ func (r *AzureNameResource) Configure(_ context.Context, req resource.ConfigureR
 	r.client = client
 }
 
+func cleanString(value string) string {
+	if value == "<null>" {
+		return ""
+	}
+	return value
+}
+
 // Create handles the creation of the resource.
 func (r *AzureNameResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan AzureNameResourceModel
@@ -130,18 +135,18 @@ func (r *AzureNameResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	request := models.ResourceNameRequest{
-		ResourceOrg:         plan.Organization.String(),
-		ResourceUnitDept:    plan.BusinessUnit.String(),
-		ResourceProjAppSvc:  plan.Project.String(),
-		ResourceType:        plan.ResourceType.String(),
-		ResourceLocation:    plan.Location.String(),
-		ResourceFunction:    plan.Function.String(),
+		ResourceOrg:         cleanString(plan.Organization.ValueString()),
+		ResourceUnitDept:    cleanString(plan.BusinessUnit.ValueString()),
+		ResourceProjAppSvc:  cleanString(plan.Project.ValueString()),
+		ResourceType:        cleanString(plan.ResourceType.ValueString()),
+		ResourceLocation:    cleanString(plan.Location.ValueString()),
+		ResourceFunction:    cleanString(plan.Function.ValueString()),
 		ResourceId:          plan.ResourceTypeId.ValueInt64(),
-		ResourceEnvironment: plan.Environment.String(),
-		ResourceInstance:    plan.Instance.String(),
+		ResourceEnvironment: cleanString(plan.Environment.ValueString()),
+		ResourceInstance:    cleanString(plan.Instance.ValueString()),
 	}
 
-	resp.Diagnostics.AddWarning("Testing", fmt.Sprintf("Request data: %s", request.ResourceType))
+	resp.Diagnostics.AddWarning("Testing", fmt.Sprintf("Request data: %#v", request))
 
 	svc := apiclient.NewResourceNamingService(r.client)
 	result, _err := svc.RequestName(request)
@@ -153,10 +158,15 @@ func (r *AzureNameResource) Create(ctx context.Context, req resource.CreateReque
 
 		plan.ID = types.Int64Value(result.ResourceNameDetails.Id)
 		plan.Name = types.StringValue(result.ResourceNameDetails.ResourceName)
-		plan.ResourceType = types.StringValue(result.ResourceNameDetails.ResourceTypeName)
+		plan.ResourceTypeFullName = types.StringValue(result.ResourceNameDetails.ResourceTypeName)
+		plan.ResourceType = types.StringValue(request.ResourceType)
 		plan.ResourceTypeId = types.Int64Value(request.ResourceId)
-		plan.Organization = types.StringValue(request.ResourceOrg)
-		plan.BusinessUnit = types.StringValue(request.ResourceUnitDept)
+		if request.ResourceOrg != "" {
+			plan.Organization = types.StringValue(request.ResourceOrg)
+		}
+		if request.ResourceUnitDept != "" {
+			plan.BusinessUnit = types.StringValue(request.ResourceUnitDept)
+		}
 		plan.Project = types.StringValue(request.ResourceProjAppSvc)
 		plan.Location = types.StringValue(request.ResourceLocation)
 		plan.Environment = types.StringValue(request.ResourceEnvironment)

@@ -14,6 +14,28 @@ var (
 )
 
 func main() {
+
+	// myClient := apiclient.NewAPIClient("http://localhost:8081", "603a01da-b170-4a0f-8d55-f809332faacd", "", nil)
+	// svc := apiclient.NewResourceNamingService(myClient)
+
+	// request := models.ResourceNameRequest{
+	// 	ResourceType:        "vm",
+	// 	ResourceEnvironment: "dev",
+	// 	ResourceFunction:    "func",
+	// 	ResourceInstance:    "88",
+	// 	ResourceId:          85,
+	// 	ResourceLocation:    "aec",
+	// 	ResourceProjAppSvc:  "tnp",
+	// }
+
+	// response, err := svc.RequestName(request)
+
+	// if err != nil {
+	// 	fmt.Println(err)
+	// } else {
+	// 	fmt.Println(response)
+	// }
+
 	var debug bool
 
 	flag.BoolVar(&debug, "debug", false, "set to true to run the provider with support for debuggers like delve")

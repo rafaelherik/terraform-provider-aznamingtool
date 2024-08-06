@@ -20,5 +20,5 @@ resource "aznamingtool_resource_name" "vm-linux-name" {
   function = "func"
   resource_type_id = 85
   resource_type= "vm"
-  instance = "17"
+  instance = "16"
 }
