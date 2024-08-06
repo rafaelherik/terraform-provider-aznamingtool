@@ -39,6 +39,20 @@ func NewBaseService(client *APIClient) *BaseService {
 //   - The response body decoding fails.
 //   - The response status code is 400 or greater.
 func (s *BaseService) DoGet(endpointKey string, uriData map[string]string, response interface{}) error {
+
+	if s == nil {
+		return fmt.Errorf("BaseService is nil")
+	}
+	if endpointKey == "" {
+		return fmt.Errorf("url is empty")
+	}
+	if s.client == nil {
+		return fmt.Errorf("client is nil")
+	}
+	if s.client.ApiEndpoints == nil {
+		return fmt.Errorf("ApiEndpoints is nil")
+	}
+
 	endpoint, exists := s.client.ApiEndpoints[endpointKey]
 	if !exists {
 		return fmt.Errorf("endpoint not found for %s", endpointKey)
@@ -121,10 +135,6 @@ func (s *BaseService) DoPost(endpointKey string, requestData interface{}, respon
 
 	if err := json.NewDecoder(resp.Body).Decode(response); err != nil {
 		return err
-	}
-
-	if resp.StatusCode >= 400 {
-		return fmt.Errorf("received error status code: %d", resp.StatusCode)
 	}
 
 	return nil

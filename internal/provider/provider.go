@@ -110,7 +110,6 @@ func (p *AzureNamingToolProvider) Configure(ctx context.Context, req provider.Co
 
 	// Example of configuring the client
 	client := apiclient.NewAPIClient(base_url, api_key, admin_password, nil)
-
 	// Make the client available during DataSource and Resource type Configure methods
 	resp.DataSourceData = client
 	resp.ResourceData = client

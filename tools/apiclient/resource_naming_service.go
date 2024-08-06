@@ -38,7 +38,7 @@ func (s *ResourceNamingService) RequestName(request models.ResourceNameRequest) 
 	}
 
 	if !response.Success {
-		return &response, fmt.Errorf("request failed: %v", response)
+		return &response, fmt.Errorf("request failed: %s", response.Message)
 	}
 
 	return &response, nil

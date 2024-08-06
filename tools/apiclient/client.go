@@ -116,9 +116,5 @@ func (c *APIClient) DoRequest(req *http.Request) (*http.Response, error) {
 		return nil, fmt.Errorf("failed to execute request: %w", err)
 	}
 
-	if resp.StatusCode >= 400 {
-		return resp, fmt.Errorf("received error status code %d: %s", resp.StatusCode, http.StatusText(resp.StatusCode))
-	}
-
 	return resp, nil
 }
