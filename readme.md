@@ -17,7 +17,7 @@ This provider is an implementation to enable the declarative API to interact wit
 
 ### Provider intialization
 
-```hcl annotate copy
+```hcl annotate 
 
 terraform {
     required_providers {
