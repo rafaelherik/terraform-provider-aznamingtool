@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/rafaelherik/terraform-provider-aznamingtool/tools/apiclient"
 	"github.com/rafaelherik/terraform-provider-aznamingtool/tools/apiclient/models"
+	"github.com/rafaelherik/terraform-provider-aznamingtool/tools/utils"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -40,6 +41,7 @@ type AzureNameResourceModel struct {
 	Location             types.String `tfsdk:"location"`
 	Instance             types.String `tfsdk:"instance"`
 	Environment          types.String `tfsdk:"environment"`
+	CustomComponents     types.Map    `tfsdk:"custom_components"`
 	CreatedAt            types.String `tfsdk:"created_at"`
 }
 
@@ -87,6 +89,9 @@ func (r *AzureNameResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			},
 			"environment": schema.StringAttribute{
 				Required: true,
+			},
+			"custom_components": schema.MapAttribute{
+				Optional: true,
 			},
 			"created_at": schema.StringAttribute{
 				Computed: true,
@@ -146,7 +151,9 @@ func (r *AzureNameResource) Create(ctx context.Context, req resource.CreateReque
 		ResourceInstance:    cleanString(plan.Instance.ValueString()),
 	}
 
-	resp.Diagnostics.AddWarning("Testing", fmt.Sprintf("Request data: %#v", request))
+	if !plan.CustomComponents.IsNull() {
+		request.CustomComponents = utils.GetStringMap(plan.CustomComponents)
+	}
 
 	svc := apiclient.NewResourceNamingService(r.client)
 	result, _err := svc.RequestName(request)

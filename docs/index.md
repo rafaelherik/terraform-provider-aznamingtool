@@ -35,7 +35,7 @@ resource "azurenamingtool_resource" "example" {
 
 * `admin_password` - (Optional, Sensitive) The administrator password used for privileged operations in the Azure Naming Tool. Defaults to the value of the `AZ_NAMINGTOOL_ADMINPASSWORD` environment variable if not provided.
 
-
+> Note: The administrator passowrd is a sensitive information, only generated name deletion requires this password for now. If you enable naming duplication in the configuration you can omit the password.
 
 ## Attribute Reference
 
