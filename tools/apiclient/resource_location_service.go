@@ -74,9 +74,7 @@ func (s *ResourceLocationService) CreateOrUpdateResourceLocation(request models.
 //   - id: A string representing the ID of the resource location.
 //
 // Returns:
-//   - An interface containing the response data.
 //   - An error if the request fails or the response indicates failure.
-func (s *ResourceLocationService) DeleteResourceLocation(id string) (interface{}, error) {
-	var response models.ResourceLocation
-	return s.baseService.DoDelete("DeleteResourceLocation", map[string]string{"id": id}, &response)
+func (s *ResourceLocationService) DeleteResourceLocation(id string) error {
+	return s.baseService.DoDelete("DeleteResourceLocation", map[string]string{"id": id})
 }

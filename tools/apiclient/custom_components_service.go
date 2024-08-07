@@ -114,9 +114,8 @@ func (s *CustomComponentService) CreateOrUpdateCustomComponent(request models.Cu
 // Returns:
 //   - An interface containing the response data.
 //   - An error if the request fails or the response indicates failure.
-func (s *CustomComponentService) DeleteCustomComponent(id string) (interface{}, error) {
-	var response models.ResourceOrganization
-	return s.baseService.DoDelete("DeleteCustomComponent", map[string]string{"id": id}, &response)
+func (s *CustomComponentService) DeleteCustomComponent(id string) error {
+	return s.baseService.DoDelete("DeleteCustomComponent", map[string]string{"id": id})
 }
 
 // DeleteCustomComponentByParentId deletes custom components based on the provided parent component ID.
@@ -125,9 +124,7 @@ func (s *CustomComponentService) DeleteCustomComponent(id string) (interface{}, 
 //   - parentComponentId: A string representing the ID of the parent custom component.
 //
 // Returns:
-//   - An interface containing the response data.
 //   - An error if the request fails or the response indicates failure.
-func (s *CustomComponentService) DeleteCustomComponentByParentId(parentComponentId string) (interface{}, error) {
-	var response models.ResourceOrganization
-	return s.baseService.DoDelete("DeleteCustomComponentByParentId", map[string]string{"parentComponentId": parentComponentId}, &response)
+func (s *CustomComponentService) DeleteCustomComponentByParentId(parentComponentId string) error {
+	return s.baseService.DoDelete("DeleteCustomComponentByParentId", map[string]string{"parentComponentId": parentComponentId})
 }

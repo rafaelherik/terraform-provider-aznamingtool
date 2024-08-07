@@ -70,9 +70,8 @@ func TestDoDelete(t *testing.T) {
 	client := NewAPIClient(server.URL, "123456", "123456", httpClient)
 	service := NewBaseService(client)
 
-	var actualResponse models.ResourceUnit
-	service.DoDelete("DeleteResourceUnit", map[string]string{"id": "1"}, &actualResponse)
+	result := service.DoDelete("DeleteResourceUnit", map[string]string{"id": "1"})
 
-	assert.Equal(t, expectedResponse, actualResponse)
+	assert.NoError(t, result)
 
 }

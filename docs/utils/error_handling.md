@@ -110,8 +110,8 @@ func main() {
 
 ### In this example:
 
-* The initializeClient function returns an ErrorClientNotInitialized error.
-* The main function checks if the error matches ErrorClientNotInitialized.
-* An inner error (network timeout) is wrapped with ErrorClientNotInitialized.
-* The wrapped error is printed and checked if it matches ErrorClientNotInitialized.
+* The `initializeClient` function returns an `ErrorClientNotInitialized` error.
+* The main function checks if the error matches `ErrorClientNotInitialized`.
+* An inner error (network timeout) is wrapped with `ErrorClientNotInitialized`.
+* The wrapped error is printed and checked if it matches `ErrorClientNotInitialized`.
 * This approach provides a consistent and structured way to handle errors in your Go application.

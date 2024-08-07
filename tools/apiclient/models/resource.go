@@ -94,6 +94,7 @@ type ResourceGeneratedName struct {
 	ResourceTypeName string
 	User             string
 	Message          string
+	Components       [][]string
 }
 
 type ResourceNameResponse struct {
