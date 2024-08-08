@@ -8,7 +8,7 @@ This provider is an implementation to enable the declarative API to interact wit
 >The Azure Naming Tool was created to help administrators define and manage their naming conventions, while providing a simple interface for users to generate a compliant name. The tool was developed using a naming pattern based on Microsoft's best practices. Once an administrator has defined the organizational components, users can use the tool to generate a name for the desired Azure resource.
 
 
-[!IMPORTANT]
+>[!IMPORTANT]
 >The AzureNamingTool manages its data using JSON files, which can cause concurrency issues when multiple users or processes attempt to read or write to these files simultaneously. This can lead to data corruption or conflicts, making it challenging to maintain consistency and integrity in the stored data. To avoid this issue, the API client for this provider implements a simple queue system. Be aware that in large environments, this may still cause issues, as the queue system is implemented only on the client instance.
 
 
