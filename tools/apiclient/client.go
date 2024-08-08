@@ -46,6 +46,7 @@ func NewAPIClient(baseURL string, apiKey string, admin_password string, HttpClie
 			"RequestNameWithComponents": baseURL + "/api/ResourceNamingRequests/RequestNameWithComponents",
 			"ValidateName":              baseURL + "/api/ResourceNamingRequests/ValidateName",
 			"GetGeneratedName":          baseURL + "/api/Admin/GetGeneratedName/{id}",
+			"DeleteGeneratedName":       baseURL + "/api/Admin/DeleteGeneratedName/{id}",
 
 			// Custom Components
 			"GetAllCustomComponents":          baseURL + "/api/CustomComponents",
@@ -110,6 +111,11 @@ func (c *APIClient) DoRequest(req *http.Request) (*http.Response, error) {
 	}
 
 	req.Header.Set("APIKey", c.APIKey)
+
+	if c.AdminPassord != "" {
+		req.Header.Set("AdminPassword", c.AdminPassord)
+
+	}
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {

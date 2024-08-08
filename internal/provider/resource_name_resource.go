@@ -8,9 +8,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/rafaelherik/terraform-provider-aznamingtool/tools/apiclient"
 	"github.com/rafaelherik/terraform-provider-aznamingtool/tools/apiclient/models"
+	"github.com/rafaelherik/terraform-provider-aznamingtool/tools/utils"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -30,19 +35,12 @@ type AzureNameResource struct {
 
 // ExampleResourceModel describes the resource data model.
 type AzureNameResourceModel struct {
-	ID                   types.Int64  `tfsdk:"id"`
-	Name                 types.String `tfsdk:"name"`
-	ResourceType         types.String `tfsdk:"resource_type"`
-	ResourceTypeFullName types.String `tfsdk:"resource_type_full_name"`
-	ResourceTypeId       types.Int64  `tfsdk:"resource_type_id"`
-	Organization         types.String `tfsdk:"organization"`
-	BusinessUnit         types.String `tfsdk:"business_unit"`
-	Project              types.String `tfsdk:"project"`
-	Function             types.String `tfsdk:"function"`
-	Location             types.String `tfsdk:"location"`
-	Instance             types.String `tfsdk:"instance"`
-	Environment          types.String `tfsdk:"environment"`
-	CreatedAt            types.String `tfsdk:"created_at"`
+	ID               types.Int64  `tfsdk:"id"`
+	ResourceName     types.String `tfsdk:"resource_name"`
+	ResourceTypeId   types.Int64  `tfsdk:"resource_type_id"`
+	ResourceTypeName types.String `tfsdk:"resource_type_name"`
+	Components       types.Map    `tfsdk:"components"`
+	CreatedOn        types.String `tfsdk:"created_on"`
 }
 
 // Metadata returns the resource type name.
@@ -57,41 +55,37 @@ func (r *AzureNameResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			"id": schema.Int64Attribute{
 				Computed: true,
 			},
-			"name": schema.StringAttribute{
+			"resource_name": schema.StringAttribute{
 				Computed: true,
-			},
-			"organization": schema.StringAttribute{
-				Optional: true,
-			},
-			"business_unit": schema.StringAttribute{
-				Optional: true,
-			},
-			"function": schema.StringAttribute{
-				Required: true,
-			},
-			"project": schema.StringAttribute{
-				Required: true,
-			},
-			"resource_type_full_name": schema.StringAttribute{
-				Computed: true,
-			},
-			"resource_type": schema.StringAttribute{
-				Optional: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"resource_type_id": schema.Int64Attribute{
 				Optional: true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 			},
-			"location": schema.StringAttribute{
-				Required: true,
-			},
-			"instance": schema.StringAttribute{
-				Optional: true,
-			},
-			"environment": schema.StringAttribute{
-				Required: true,
-			},
-			"created_at": schema.StringAttribute{
+			"resource_type_name": schema.StringAttribute{
 				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"components": schema.MapAttribute{
+				Required:    true,
+				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifier.RequiresReplace(),
+					mapplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"created_on": schema.StringAttribute{
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
@@ -115,16 +109,9 @@ func (r *AzureNameResource) Configure(_ context.Context, req resource.ConfigureR
 	r.client = client
 }
 
-func cleanString(value string) string {
-	if value == "<null>" {
-		return ""
-	}
-	return value
-}
-
 // Create handles the creation of the resource.
 func (r *AzureNameResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan AzureNameResourceModel
+	var plan *AzureNameResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -136,19 +123,12 @@ func (r *AzureNameResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	request := models.ResourceNameRequest{
-		ResourceOrg:         cleanString(plan.Organization.ValueString()),
-		ResourceUnitDept:    cleanString(plan.BusinessUnit.ValueString()),
-		ResourceProjAppSvc:  cleanString(plan.Project.ValueString()),
-		ResourceType:        cleanString(plan.ResourceType.ValueString()),
-		ResourceLocation:    cleanString(plan.Location.ValueString()),
-		ResourceFunction:    cleanString(plan.Function.ValueString()),
-		ResourceId:          plan.ResourceTypeId.ValueInt64(),
-		ResourceEnvironment: cleanString(plan.Environment.ValueString()),
-		ResourceInstance:    cleanString(plan.Instance.ValueString()),
-	}
+	request, _err := plan.ToResourceRequest()
 
-	resp.Diagnostics.AddWarning("Testing", fmt.Sprintf("Request data: %#v", request))
+	if _err != nil {
+		resp.Diagnostics.AddError("Failed to transform the request.", _err.Error())
+		return
+	}
 
 	svc := apiclient.NewResourceNamingService(r.client)
 	result, _err := svc.RequestName(request)
@@ -192,29 +172,35 @@ func (r *AzureNameResource) Read(ctx context.Context, req resource.ReadRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
 	svc := apiclient.NewResourceNamingService(r.client)
-
 	result, _err := svc.GetGeneratedName(state.ID.String())
-
 	if _err != nil {
 		resp.Diagnostics.AddWarning("Failed to get the generated name.", result.Message)
 		resp.Diagnostics.AddError("Failed to get the generated name.", _err.Error())
 		return
 
 	} else {
-		state.ID = types.Int64Value(result.Id)
-		state.Name = types.StringValue(result.ResourceName)
-		state.ResourceType = types.StringValue(result.ResourceTypeName)
+		adminSvc := apiclient.NewResourceNamingService(r.client)
+		generatedName, _err := adminSvc.GetGeneratedName(state.ID.String())
 
-	}
+		if _err != nil {
+			resp.Diagnostics.AddError("Failed to get the generated name.", _err.Error())
+			return
+		}
+		finalData, err := transformResponseToSchema(generatedName)
 
-	// Set refreshed state
-	diags = resp.State.Set(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
+		if err != nil {
+			resp.Diagnostics.AddError("Failed to transform the response.", err.Error())
+			return
+		}
+
+		state.ID = finalData.ID
+		state.Components = finalData.Components
+		state.CreatedOn = finalData.CreatedOn
+		state.ResourceName = finalData.ResourceName
+		state.ResourceTypeName = finalData.ResourceTypeName
 	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 // Update handles updating the resource.
@@ -222,19 +208,28 @@ func (r *AzureNameResource) Update(ctx context.Context, req resource.UpdateReque
 	var plan AzureNameResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Example API call to update the resource
-
-	diags = resp.State.Set(ctx, plan)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.AddError("Update not supported", "This resource does not support updates.")
 }
 
 // Delete handles deleting the resource.
 func (r *AzureNameResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	// Example API call to delete the resource
+	var state AzureNameResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	svc := apiclient.NewResourceNamingService(r.client)
+	_err := svc.DeleteGeneratedName(state.ID.String())
+	if _err != nil {
+		resp.Diagnostics.AddError("Failed to get the generated name.", _err.Error())
+		return
+
+	}
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 // ImportState handles importing the resource state.

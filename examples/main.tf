@@ -28,6 +28,7 @@ provider "aznamingtool" {
   admin_password = "1q2w3e$R%T" 
 }
 
+
 resource "aznamingtool_resource_name" "my-resource-group" {  
   components = {
     resource_environment = var.project_configuration["resource_environment"]

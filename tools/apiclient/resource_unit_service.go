@@ -74,9 +74,7 @@ func (s *ResourceUnitService) CreateOrUpdateResourceUnit(request models.Resource
 //   - id: A string representing the ID of the resource unit.
 //
 // Returns:
-//   - An interface containing the response data.
 //   - An error if the request fails or the response indicates failure.
-func (s *ResourceUnitService) DeleteResourceUnit(id string) (interface{}, error) {
-	var response models.ResourceUnit
-	return s.baseService.DoDelete("DeleteResourceUnit", map[string]string{"id": id}, &response)
+func (s *ResourceUnitService) DeleteResourceUnit(id string) error {
+	return s.baseService.DoDelete("DeleteResourceUnit", map[string]string{"id": id})
 }

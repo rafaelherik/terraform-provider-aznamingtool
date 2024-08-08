@@ -76,7 +76,6 @@ func (s *ResourceOrganizationService) CreateOrUpdateResourceOrganization(request
 // Returns:
 //   - An interface containing the response data.
 //   - An error if the request fails or the response indicates failure.
-func (s *ResourceOrganizationService) DeleteResourceOrganization(id string) (interface{}, error) {
-	var response models.ResourceOrganization
-	return s.baseService.DoDelete("DeleteResourceOrganization", map[string]string{"id": id}, &response)
+func (s *ResourceOrganizationService) DeleteResourceOrganization(id string) error {
+	return s.baseService.DoDelete("DeleteResourceOrganization", map[string]string{"id": id})
 }

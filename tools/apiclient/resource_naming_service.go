@@ -30,7 +30,7 @@ func NewResourceNamingService(client *APIClient) *ResourceNamingService {
 // Returns:
 //   - A pointer to models.ResourceNameResponse containing the response data.
 //   - An error if the request fails or the response indicates failure.
-func (s *ResourceNamingService) RequestName(request models.ResourceNameRequest) (*models.ResourceNameResponse, error) {
+func (s *ResourceNamingService) RequestName(request *models.ResourceNameRequest) (*models.ResourceNameResponse, error) {
 	var response models.ResourceNameResponse
 	err := s.baseService.DoPost("RequestName", request, &response)
 	if err != nil {
@@ -40,7 +40,6 @@ func (s *ResourceNamingService) RequestName(request models.ResourceNameRequest) 
 	if !response.Success {
 		return &response, fmt.Errorf("request failed: %s. The value was:%#v ", response.Message, request)
 	}
-
 	return &response, nil
 }
 
@@ -100,4 +99,19 @@ func (s *ResourceNamingService) GetGeneratedName(id string) (*models.ResourceGen
 	}
 
 	return &response, nil
+}
+
+// DeleteGeneratedName deletes a generated resource name by its ID.
+//
+// Parameters:
+//   - id: A string representing the ID of the generated resource name.
+//
+// Returns:
+//   - An error if the request fails.
+func (s *ResourceNamingService) DeleteGeneratedName(id string) error {
+	err := s.baseService.DoDelete("DeleteGeneratedName", map[string]string{"id": id})
+	if err != nil {
+		return err
+	}
+	return nil
 }

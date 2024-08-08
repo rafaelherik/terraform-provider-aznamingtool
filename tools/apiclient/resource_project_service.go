@@ -74,9 +74,7 @@ func (s *ResourceProjectService) CreateOrUpdateResourceProject(request models.Re
 //   - id: A string representing the ID of the resource project.
 //
 // Returns:
-//   - An interface containing the response data.
 //   - An error if the request fails or the response indicates failure.
-func (s *ResourceProjectService) DeleteResourceProject(id string) (interface{}, error) {
-	var response models.ResourceProject
-	return s.baseService.DoDelete("DeleteResourceProject", map[string]string{"id": id}, &response)
+func (s *ResourceProjectService) DeleteResourceProject(id string) error {
+	return s.baseService.DoDelete("DeleteResourceProject", map[string]string{"id": id})
 }
