@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -13,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/rafaelherik/terraform-provider-aznamingtool/tools/apiclient"
 	"github.com/rafaelherik/terraform-provider-aznamingtool/tools/apiclient/models"
 	"github.com/rafaelherik/terraform-provider-aznamingtool/tools/utils"
@@ -28,12 +30,12 @@ func NewAzureNameResource() resource.Resource {
 	return &AzureNameResource{}
 }
 
-// ExampleResource defines the resource implementation.
+// AzureNameResource defines the resource implementation.
 type AzureNameResource struct {
 	client *apiclient.APIClient
 }
 
-// ExampleResourceModel describes the resource data model.
+// AzureNameResourceModel describes the resource data model.
 type AzureNameResourceModel struct {
 	ID               types.Int64  `tfsdk:"id"`
 	ResourceName     types.String `tfsdk:"resource_name"`
@@ -101,9 +103,8 @@ func (r *AzureNameResource) Configure(_ context.Context, req resource.ConfigureR
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *ApiClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *apiclient.APIClient, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
-
 		return
 	}
 	r.client = client
@@ -111,7 +112,7 @@ func (r *AzureNameResource) Configure(_ context.Context, req resource.ConfigureR
 
 // Create handles the creation of the resource.
 func (r *AzureNameResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan *AzureNameResourceModel
+	var plan AzureNameResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -123,37 +124,35 @@ func (r *AzureNameResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	request, _err := plan.ToResourceRequest()
-
-	if _err != nil {
-		resp.Diagnostics.AddError("Failed to transform the request.", _err.Error())
+	request, err := plan.ToResourceRequest()
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to transform the request.", err.Error())
 		return
 	}
 
 	svc := apiclient.NewResourceNamingService(r.client)
-	result, _err := svc.RequestName(request)
-
-	if _err != nil {
-		resp.Diagnostics.AddError("Failed to request the name.", _err.Error())
+	result, err := svc.RequestName(request)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to request the name.", err.Error())
 		return
 	}
 	plan.ID = types.Int64Value(result.ResourceNameDetails.Id)
-	// Call the read function to update the state
-	plan, _err = _ReadFromAPI(r.client, plan.ID.String())
-
-	if request.ResourceId != 0 {
-		plan.ResourceTypeId = types.Int64Value(request.ResourceId)
-	}
-
-	if _err != nil {
-		resp.Diagnostics.AddError("Failed to read the resource.", _err.Error())
+	newPlan, err := _ReadFromAPI(r.client, strconv.FormatInt(result.ResourceNameDetails.Id, 10))
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to read the resource.", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	tflog.Info(ctx, fmt.Sprintf("Resource created successfully(%s). %d", request.ResourceType, newPlan))
 
+	if request.ResourceId != 0 {
+		newPlan.ResourceTypeId = types.Int64Value(request.ResourceId)
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &newPlan)...)
 }
 
+// _ReadFromAPI fetches and transforms the API response into the schema model.
 func _ReadFromAPI(client *apiclient.APIClient, id string) (*AzureNameResourceModel, error) {
 	svc := apiclient.NewResourceNamingService(client)
 	result, err := svc.GetGeneratedName(id)
@@ -161,7 +160,6 @@ func _ReadFromAPI(client *apiclient.APIClient, id string) (*AzureNameResourceMod
 		return nil, err
 	}
 	return transformResponseToSchema(result)
-
 }
 
 // Read handles reading the resource data.
@@ -172,42 +170,18 @@ func (r *AzureNameResource) Read(ctx context.Context, req resource.ReadRequest, 
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	svc := apiclient.NewResourceNamingService(r.client)
-	result, _err := svc.GetGeneratedName(state.ID.String())
-	if _err != nil {
-		resp.Diagnostics.AddWarning("Failed to get the generated name.", result.Message)
-		resp.Diagnostics.AddError("Failed to get the generated name.", _err.Error())
+
+	plan, err := _ReadFromAPI(r.client, state.ID.String())
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to read the resource.", err.Error())
 		return
-
-	} else {
-		adminSvc := apiclient.NewResourceNamingService(r.client)
-		generatedName, _err := adminSvc.GetGeneratedName(state.ID.String())
-
-		if _err != nil {
-			resp.Diagnostics.AddError("Failed to get the generated name.", _err.Error())
-			return
-		}
-		finalData, err := transformResponseToSchema(generatedName)
-
-		if err != nil {
-			resp.Diagnostics.AddError("Failed to transform the response.", err.Error())
-			return
-		}
-
-		state.ID = finalData.ID
-		state.Components = finalData.Components
-		state.CreatedOn = finalData.CreatedOn
-		state.ResourceName = finalData.ResourceName
-		state.ResourceTypeName = finalData.ResourceTypeName
 	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
 // Update handles updating the resource.
 func (r *AzureNameResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan AzureNameResourceModel
-	diags := req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
 	resp.Diagnostics.AddError("Update not supported", "This resource does not support updates.")
 }
 
@@ -219,24 +193,21 @@ func (r *AzureNameResource) Delete(ctx context.Context, req resource.DeleteReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	svc := apiclient.NewResourceNamingService(r.client)
-	_err := svc.DeleteGeneratedName(state.ID.String())
-	if _err != nil {
-		resp.Diagnostics.AddError("Failed to get the generated name.", _err.Error())
-		return
 
-	}
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
+	svc := apiclient.NewResourceNamingService(r.client)
+	err := svc.DeleteGeneratedName(state.ID.String())
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to delete the generated name.", err.Error())
 		return
 	}
 }
 
 // ImportState handles importing the resource state.
 func (r *AzureNameResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	// Example import logic
+	// Implement import logic here
 }
 
+// ToResourceRequest transforms the resource model to a ResourceNameRequest.
 func (r *AzureNameResourceModel) ToResourceRequest() (*models.ResourceNameRequest, error) {
 	request := &models.ResourceNameRequest{
 		CustomComponents: make(map[string]string),
@@ -277,11 +248,7 @@ func (r *AzureNameResourceModel) ToResourceRequest() (*models.ResourceNameReques
 	return request, nil
 }
 
-func (plan *AzureNameResourceModel) FromResourceName(request *models.ResourceNameRequest, result *models.ResourceGeneratedName) (*AzureNameResourceModel, error) {
-
-	return transformResponseToSchema(result)
-}
-
+// transformResponseToSchema transforms the API response to the schema model.
 func transformResponseToSchema(resource *models.ResourceGeneratedName) (*AzureNameResourceModel, error) {
 	componentsMap := make(map[string]attr.Value)
 	for _, component := range resource.Components {
@@ -302,4 +269,15 @@ func transformResponseToSchema(resource *models.ResourceGeneratedName) (*AzureNa
 		Components:       components,
 		CreatedOn:        types.StringValue(resource.CreatedOn),
 	}, nil
+}
+
+var mapKeyToField = map[string]string{
+	"resource_environment":  "ResourceEnvironment",
+	"resource_function":     "ResourceFunction",
+	"resource_instance":     "ResourceInstance",
+	"resource_location":     "ResourceLocation",
+	"resource_org":          "ResourceOrg",
+	"resource_proj_app_svc": "ResourceProjAppSvc",
+	"resource_type":         "ResourceType",
+	"resource_unit_dept":    "ResourceUnitDept",
 }

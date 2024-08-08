@@ -39,30 +39,11 @@ func NewBaseService(client *APIClient) *BaseService {
 //   - The response body decoding fails.
 //   - The response status code is 400 or greater.
 func (s *BaseService) DoGet(endpointKey string, uriData map[string]string, response interface{}) error {
-
-	if s == nil {
-		return fmt.Errorf("BaseService is nil")
-	}
-	if endpointKey == "" {
-		return fmt.Errorf("url is empty")
-	}
-	if s.client == nil {
-		return fmt.Errorf("client is nil")
-	}
-	if s.client.ApiEndpoints == nil {
-		return fmt.Errorf("ApiEndpoints is nil")
+	if err := s.validateClientAndEndpoint(endpointKey); err != nil {
+		return err
 	}
 
-	endpoint, exists := s.client.ApiEndpoints[endpointKey]
-	if !exists {
-		return fmt.Errorf("endpoint not found for %s", endpointKey)
-	}
-
-	// Perform string interpolation with uriData
-	for key, value := range uriData {
-		placeholder := fmt.Sprintf("{%s}", key)
-		endpoint = strings.Replace(endpoint, placeholder, value, -1)
-	}
+	endpoint := s.interpolateURL(endpointKey, uriData)
 
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
@@ -75,12 +56,12 @@ func (s *BaseService) DoGet(endpointKey string, uriData map[string]string, respo
 	}
 	defer resp.Body.Close()
 
-	if err := json.NewDecoder(resp.Body).Decode(response); err != nil {
-		return err
-	}
-
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf("received error status code: %d", resp.StatusCode)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(response); err != nil {
+		return err
 	}
 
 	return nil
@@ -102,10 +83,11 @@ func (s *BaseService) DoGet(endpointKey string, uriData map[string]string, respo
 //   - The response body decoding fails.
 //   - The response status code is 400 or greater.
 func (s *BaseService) DoPost(endpointKey string, requestData interface{}, response interface{}) error {
-	endpoint, exists := s.client.ApiEndpoints[endpointKey]
-	if !exists {
-		return fmt.Errorf("endpoint not found for %s", endpointKey)
+	if err := s.validateClientAndEndpoint(endpointKey); err != nil {
+		return err
 	}
+
+	endpoint := s.client.ApiEndpoints[endpointKey]
 
 	var req *http.Request
 	var err error
@@ -133,6 +115,10 @@ func (s *BaseService) DoPost(endpointKey string, requestData interface{}, respon
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("received error status code: %d", resp.StatusCode)
+	}
+
 	if err := json.NewDecoder(resp.Body).Decode(response); err != nil {
 		return err
 	}
@@ -146,25 +132,18 @@ func (s *BaseService) DoPost(endpointKey string, requestData interface{}, respon
 // Parameters:
 //   - endpointKey: The key to the API endpoint in the client's endpoint map.
 //   - uriData: A map containing data to be interpolated into the endpoint URL.
-//   - response: A pointer to a variable where the response should be decoded.
 //
-// Returns://
+// Returns:
 //   - error: An error if any of the following occurs:
 //   - The endpoint is not found in the client's endpoint map.
 //   - The request creation fails.
 //   - The request execution fails.
-//   - The response body decoding fails.
 func (s *BaseService) DoDelete(endpointKey string, uriData map[string]string) error {
-	endpoint, exists := s.client.ApiEndpoints[endpointKey]
-	if !exists {
-		return fmt.Errorf("endpoint not found for %s", endpointKey)
+	if err := s.validateClientAndEndpoint(endpointKey); err != nil {
+		return err
 	}
 
-	// Perform string interpolation with uriData
-	for key, value := range uriData {
-		placeholder := fmt.Sprintf("{%s}", key)
-		endpoint = strings.Replace(endpoint, placeholder, value, -1)
-	}
+	endpoint := s.interpolateURL(endpointKey, uriData)
 
 	req, err := http.NewRequest("DELETE", endpoint, nil)
 	if err != nil {
@@ -177,5 +156,39 @@ func (s *BaseService) DoDelete(endpointKey string, uriData map[string]string) er
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("received error status code: %d", resp.StatusCode)
+	}
+
 	return nil
+}
+
+// validateClientAndEndpoint checks if the client and endpoint are properly initialized
+func (s *BaseService) validateClientAndEndpoint(endpointKey string) error {
+	if s == nil {
+		return fmt.Errorf("BaseService is nil")
+	}
+	if endpointKey == "" {
+		return fmt.Errorf("url is empty")
+	}
+	if s.client == nil {
+		return fmt.Errorf("client is nil")
+	}
+	if s.client.ApiEndpoints == nil {
+		return fmt.Errorf("ApiEndpoints is nil")
+	}
+	return nil
+}
+
+// interpolateURL performs string interpolation on the endpoint URL
+func (s *BaseService) interpolateURL(endpointKey string, uriData map[string]string) string {
+	endpoint := s.client.ApiEndpoints[endpointKey]
+
+	// Perform string interpolation with uriData
+	for key, value := range uriData {
+		placeholder := fmt.Sprintf("{%s}", key)
+		endpoint = strings.Replace(endpoint, placeholder, value, -1)
+	}
+
+	return endpoint
 }

@@ -2,6 +2,7 @@
 resource "aznamingtool_resource_name" "aznt-rg" {  
   components = merge(var.project_configuration, {
     resource_type= "rg"    
+    resource_instance = "1"
   })
 }
 
@@ -9,7 +10,8 @@ resource "aznamingtool_resource_name" "aznt-vm" {
   resource_type_id = 85 
   components = merge(var.project_configuration, {
     resource_instance = "1"
-    resource_type = "vm"    
+    resource_type = "vm"        
+    resource_function = "func"
   })
 }
 
@@ -38,6 +40,7 @@ resource "aznamingtool_resource_name" "aznt-osdisk" {
   components = merge(var.project_configuration, {
     resource_instance = "1"
     resource_type = "osdisk"    
+    resource_function = "func"
   })
 }
 

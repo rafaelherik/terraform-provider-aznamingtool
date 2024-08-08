@@ -4,21 +4,7 @@ terraform {
         source = "registry.terrafrom.io/rafaelherik/aznamingtool"
         version = "1.0.0-beta"
     }        
-   azurerm = {
-      source = "hashicorp/azurerm"
-      version = "2.46.0"
-    }
   }
-}
-
-variable "project_configuration" {
-  type = map(string)
-  default = {
-    resource_environment = "dev"
-    resource_location = "euw"
-    resource_proj_app_svc = "tnp"
-    resource_function = "func"
-  } 
 }
 
 
@@ -29,32 +15,17 @@ provider "aznamingtool" {
 }
 
 
+variable "project_configuration" {
+  type = map(string)
+  default = {
+    resource_environment = "dev"
+    resource_location = "euw"
+    resource_proj_app_svc = "tnp"
+  } 
+}
 resource "aznamingtool_resource_name" "my-resource-group" {  
-  components = {
-    resource_environment = var.project_configuration["resource_environment"]
-    resource_location =  var.project_configuration["resource_location"]
-    resource_proj_app_svc = var
-    resource_function = var.project_configuration["resource_function"]  
-    resource_type= "rg"    
-  }
-}
-
-resource "aznamingtool_resource_name" "my-virutal-machine" { 
-  resource_type_id = 85 
-  components = {
-    resource_environment = var.project_configuration["resource_environment"]
-    resource_location =  var.project_configuration["resource_location"]
-    resource_proj_app_svc = var
-    resource_function = var.project_configuration["resource_function"]
-    resource_instance = "1"
-  }
-}
-
-
-
-reso
-
-
-output "vm-linux-name" {
-  value = aznamingtool_resource_name.vm-linux-name.name
+  components = merge(var.project_configuration, {    
+    resource_type= "rg"   
+    resource_instance = "1" 
+  })
 }

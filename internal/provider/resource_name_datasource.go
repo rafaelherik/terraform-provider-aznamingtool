@@ -145,14 +145,3 @@ func transformResponseToDataSourceSchema(resource *models.ResourceGeneratedName)
 		CreatedOn:        types.StringValue(resource.CreatedOn),
 	}, nil
 }
-
-var mapKeyToField = map[string]string{
-	"resource_environment":  "ResourceEnvironment",
-	"resource_function":     "ResourceFunction",
-	"resource_instance":     "ResourceInstance",
-	"resource_location":     "ResourceLocation",
-	"resource_org":          "ResourceOrg",
-	"resource_proj_app_svc": "ResourceProjAppSvc",
-	"resource_type":         "ResourceType",
-	"resource_unit_dept":    "ResourceUnitDept",
-}
