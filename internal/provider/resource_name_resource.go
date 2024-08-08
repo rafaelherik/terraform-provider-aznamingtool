@@ -204,7 +204,28 @@ func (r *AzureNameResource) Delete(ctx context.Context, req resource.DeleteReque
 
 // ImportState handles importing the resource state.
 func (r *AzureNameResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	// Implement import logic here
+	// The ID for the resource is expected to be passed in req.ID
+	id, err := strconv.ParseInt(req.ID, 10, 64)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error parsing ID",
+			fmt.Sprintf("Could not parse ID '%s' as an integer: %s", req.ID, err.Error()),
+		)
+		return
+	}
+
+	// Fetch the resource from the API
+	resourceModel, err := _ReadFromAPI(r.client, strconv.FormatInt(id, 10))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error fetching resource",
+			fmt.Sprintf("Could not fetch resource with ID '%s': %s", req.ID, err.Error()),
+		)
+		return
+	}
+
+	// Set the state with the fetched resource
+	resp.Diagnostics.Append(resp.State.Set(ctx, resourceModel)...)
 }
 
 // ToResourceRequest transforms the resource model to a ResourceNameRequest.
