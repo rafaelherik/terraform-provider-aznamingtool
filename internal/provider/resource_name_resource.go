@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -154,28 +156,32 @@ func (r *AzureNameResource) Create(ctx context.Context, req resource.CreateReque
 	if _err != nil {
 		resp.Diagnostics.AddError("Failed to request the name.", _err.Error())
 		return
-	} else {
+	}
+	plan.ID = types.Int64Value(result.ResourceNameDetails.Id)
+	// Call the read function to update the state
+	plan, _err = _ReadFromAPI(r.client, plan.ID.String())
 
-		plan.ID = types.Int64Value(result.ResourceNameDetails.Id)
-		plan.Name = types.StringValue(result.ResourceNameDetails.ResourceName)
-		plan.ResourceTypeFullName = types.StringValue(result.ResourceNameDetails.ResourceTypeName)
-		plan.ResourceType = types.StringValue(request.ResourceType)
+	if request.ResourceId != 0 {
 		plan.ResourceTypeId = types.Int64Value(request.ResourceId)
-		if request.ResourceOrg != "" {
-			plan.Organization = types.StringValue(request.ResourceOrg)
-		}
-		if request.ResourceUnitDept != "" {
-			plan.BusinessUnit = types.StringValue(request.ResourceUnitDept)
-		}
-		plan.Project = types.StringValue(request.ResourceProjAppSvc)
-		plan.Location = types.StringValue(request.ResourceLocation)
-		plan.Environment = types.StringValue(request.ResourceEnvironment)
-		plan.Instance = types.StringValue(request.ResourceInstance)
-		plan.CreatedAt = types.StringValue(result.ResourceNameDetails.CreatedOn)
 	}
 
-	diags = resp.State.Set(ctx, plan)
-	resp.Diagnostics.Append(diags...)
+	if _err != nil {
+		resp.Diagnostics.AddError("Failed to read the resource.", _err.Error())
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+
+}
+
+func _ReadFromAPI(client *apiclient.APIClient, id string) (*AzureNameResourceModel, error) {
+	svc := apiclient.NewResourceNamingService(client)
+	result, err := svc.GetGeneratedName(id)
+	if err != nil {
+		return nil, err
+	}
+	return transformResponseToSchema(result)
+
 }
 
 // Read handles reading the resource data.
@@ -234,4 +240,71 @@ func (r *AzureNameResource) Delete(ctx context.Context, req resource.DeleteReque
 // ImportState handles importing the resource state.
 func (r *AzureNameResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	// Example import logic
+}
+
+func (r *AzureNameResourceModel) ToResourceRequest() (*models.ResourceNameRequest, error) {
+	request := &models.ResourceNameRequest{
+		CustomComponents: make(map[string]string),
+	}
+
+	if !r.ResourceTypeId.IsNull() && !r.ResourceTypeId.IsUnknown() {
+		request.ResourceId = r.ResourceTypeId.ValueInt64()
+	}
+
+	for key, value := range r.Components.Elements() {
+		stringValue := value.(types.String).ValueString()
+		mappedKey := strings.ToLower(key)
+
+		if fieldName, exists := mapKeyToField[mappedKey]; exists {
+			switch fieldName {
+			case "ResourceEnvironment":
+				request.ResourceEnvironment = stringValue
+			case "ResourceFunction":
+				request.ResourceFunction = stringValue
+			case "ResourceInstance":
+				request.ResourceInstance = stringValue
+			case "ResourceLocation":
+				request.ResourceLocation = stringValue
+			case "ResourceOrg":
+				request.ResourceOrg = stringValue
+			case "ResourceProjAppSvc":
+				request.ResourceProjAppSvc = stringValue
+			case "ResourceType":
+				request.ResourceType = stringValue
+			case "ResourceUnitDept":
+				request.ResourceUnitDept = stringValue
+			}
+		} else {
+			request.CustomComponents[key] = stringValue
+		}
+	}
+
+	return request, nil
+}
+
+func (plan *AzureNameResourceModel) FromResourceName(request *models.ResourceNameRequest, result *models.ResourceGeneratedName) (*AzureNameResourceModel, error) {
+
+	return transformResponseToSchema(result)
+}
+
+func transformResponseToSchema(resource *models.ResourceGeneratedName) (*AzureNameResourceModel, error) {
+	componentsMap := make(map[string]attr.Value)
+	for _, component := range resource.Components {
+		if len(component) == 2 {
+			snakeKey := utils.CamelToSnake(component[0])
+			componentsMap[snakeKey] = types.StringValue(component[1])
+		}
+	}
+	components, diags := types.MapValue(types.StringType, componentsMap)
+	if diags.HasError() {
+		return nil, fmt.Errorf("failed to transform components: %v", diags.Errors())
+	}
+
+	return &AzureNameResourceModel{
+		ID:               types.Int64Value(resource.Id),
+		ResourceName:     types.StringValue(resource.ResourceName),
+		ResourceTypeName: types.StringValue(resource.ResourceTypeName),
+		Components:       components,
+		CreatedOn:        types.StringValue(resource.CreatedOn),
+	}, nil
 }

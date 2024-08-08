@@ -46,3 +46,12 @@ examples/terraform.tfstate
 /Godeps/_workspace/pkg/*/gopkg.in/urfave/cli.v2/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/
 /Godeps/_workspace/pkg/*/gopkg.in/urfave/cli.v2/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/
 /Godeps/_workspace/pkg/*/gopkg.in/urfave/cli.v2/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc/altsrc
+
+
+
+*.terraform/
+*.tfstate
+*terraform.*
+*.lock.hcl
+
+*env.sh
