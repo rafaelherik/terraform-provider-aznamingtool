@@ -23,4 +23,5 @@ resource "example_resource" "example" {
 ```
 
 ### Output Error Messages
+
 Include the error messages you encountered. Providing detailed output will help us diagnose the issue more effectively.
