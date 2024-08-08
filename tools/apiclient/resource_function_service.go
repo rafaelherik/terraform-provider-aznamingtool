@@ -74,9 +74,7 @@ func (s *ResourceFunctionService) CreateOrUpdateResourceFunction(request models.
 //   - id: A string representing the ID of the resource function.
 //
 // Returns:
-//   - An interface containing the response data.
 //   - An error if the request fails or the response indicates failure.
-func (s *ResourceFunctionService) DeleteResourceFunction(id string) (interface{}, error) {
-	var response models.ResourceFunction
-	return s.baseService.DoDelete("DeleteResourceFunction", map[string]string{"id": id}, &response)
+func (s *ResourceFunctionService) DeleteResourceFunction(id string) error {
+	return s.baseService.DoDelete("DeleteResourceFunction", map[string]string{"id": id})
 }

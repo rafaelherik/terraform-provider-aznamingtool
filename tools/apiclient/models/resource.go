@@ -1,7 +1,7 @@
 package models
 
 type ResourceBaseEntity struct {
-	Id        int
+	Id        int32
 	Name      string
 	ShortName string
 	SortOrder int
@@ -70,7 +70,7 @@ type ResourceNameRequest struct {
 	ResourceProjAppSvc  string
 	ResourceType        string
 	ResourceUnitDept    string
-	CustomComponents    []CustomComponent
+	CustomComponents    map[string]string
 	ResourceId          int64
 	CreatedBy           string
 }
@@ -94,6 +94,7 @@ type ResourceGeneratedName struct {
 	ResourceTypeName string
 	User             string
 	Message          string
+	Components       [][]string
 }
 
 type ResourceNameResponse struct {
