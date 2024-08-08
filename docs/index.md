@@ -42,3 +42,12 @@ resource "azurenamingtool_resource" "example" {
 * `id` - A unique identifier for the resource.
 * `name` - The name of the resource as configured or generated.
 * `created_at` - The timestamp when the resource was created, in ISO 8601 format (e.g., 2023-08-01T12:34:56Z).
+
+
+## Compatibility 
+
+There are the compatibility matrix between the Terraform Provider and the AzureNamingTool releases:
+
+| rafaelherik/aznamingtool  | AzureNamingTool        |
+|---------------------------|----------------------------|
+| [1.0.0](https://registry.terraform.io/providers/rafaelherik/aznamingtool/1.0.0)    |  [4.20](https://github.com/mspnp/AzureNamingTool/releases/tag/v4.2.0) , [4.21](https://github.com/mspnp/AzureNamingTool/releases/tag/v4.2.1)      |
